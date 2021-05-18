@@ -48,7 +48,9 @@ $docker restart name/ID
 
   安装插件
 
-1.安装中文分词插件，
+1.安装中文分词插件
+
+https://github.com/medcl/elasticsearch-analysis-ik
 
 登录容器
 
@@ -62,7 +64,13 @@ docker exec -it es7_12_01  /bin/bash
 
 
 
-2.安装拼音插件，登录容器，执行
+2.安装拼音插件
+
+https://github.com/medcl/elasticsearch-analysis-pinyin/tree/master
+
+登录容器
+
+执行
 
  elasticsearch-plugin install https://github.com/medcl/elasticsearch-analysis-pinyin/releases/download/v7.12.1/elasticsearch-analysis-pinyin-7.12.1.zip
 
@@ -71,6 +79,108 @@ docker exec -it es7_12_01  /bin/bash
 3.简繁体转换插件
 
 https://github.com/medcl/elasticsearch-analysis-stconvert
+
+
+
+
+
+```
+
+#查看插件列表
+GET _cat/plugins
+#默认英文分词，会将中文拆分为单个
+GET /_analyze
+{
+    "text": "我爱祖国"
+}
+#中文分词
+GET /_analyze
+{
+    "analyzer": "ik_smart",
+    "text": "北京印千山拍卖有限公司"
+}
+GET /_analyze
+{
+    "analyzer": "ik_max_word",
+    "text": "北京印千山拍卖有限公司"
+}
+
+#pinyin
+POST /_analyze
+{
+  "analyzer": "pinyin",
+  "text":"新型冠状病毒"
+}
+PUT /medcl/ 
+{
+    "settings" : {
+        "analysis" : {
+            "analyzer" : {
+                "pinyin_analyzer" : {
+                    "tokenizer" : "my_pinyin"
+                    }
+            },
+            "tokenizer" : {
+                "my_pinyin" : {
+                    "type" : "pinyin",
+                    "keep_separate_first_letter" : false,
+                    "keep_full_pinyin" : true,
+                    "keep_original" : true,
+                    "limit_first_letter_length" : 16,
+                    "lowercase" : true,
+                    "remove_duplicated_term" : true
+                }
+            }
+        }
+    }
+}
+GET /medcl/_analyze
+{
+    "analyzer": "pinyin_analyzer",
+    "text": "北京印千山拍卖有限公司"
+}
+GET /medcl/_analyze
+{
+    "analyzer": "pinyin_analyzer",
+    "text": "北京印千山拍卖有限公司"
+}
+POST /medcl/_mapping 
+{
+        "properties": {
+            "name": {
+                "type": "keyword",
+                "fields": {
+                    "pinyin": {
+                        "type": "text",
+                        "store": false,
+                        "term_vector": "with_offsets",
+                        "analyzer": "pinyin_analyzer"
+                    }
+                }
+            }
+        }
+    
+}
+
+POST /medcl/_create/andy
+{"name":"刘德华"}
+
+GET /medcl/_search
+{   
+  "query": {
+    "query_string": {
+      "query": "ldh",
+      "default_field": "name.pinyin"
+    }
+  }
+}
+
+
+```
+
+
+
+
 
 
 

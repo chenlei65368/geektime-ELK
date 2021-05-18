@@ -25,4 +25,25 @@ bin/logstash -f /YOUR_PATH_of_logstash.conf
 ## 相关阅读
 - 下载最MovieLens最小测试数据集：https://grouplens.org/datasets/movielens/
 - Logstash下载：https://www.elastic.co/cn/downloads/logstash
-- Logstash参考文档：https://www.elastic.co/guide/en/logstash/current/index.html
+- Logstash参考文档： https://www.elastic.co/guide/en/logstash/current/index.html
+
+
+
+## 中文文档
+
+https://doc.yonyoucloud.com/doc/logstash-best-practice-cn/filter/mutate.html
+
+可以使用logstash 通过sql同步数据到es
+
+
+
+https://www.cnblogs.com/baiyunchen/p/11253404.html
+
+https://cloud.tencent.com/developer/article/1647080
+
+https://blog.csdn.net/zhangcongyi420/article/details/104887017
+
+https://my.oschina.net/u/4410144/blog/4333350
+
+
+
