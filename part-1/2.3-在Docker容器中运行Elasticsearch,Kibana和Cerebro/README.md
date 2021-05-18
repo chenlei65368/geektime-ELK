@@ -40,3 +40,39 @@ $docker restart name/ID
 - Cerebro 源码 https://github.com/lmenezes/cerebro
 - 一个开源的 ELK（Elasticsearch + Logstash + Kibana） docker-compose 配置 https://github.com/deviantony/docker-elk
 - Install Elasticsearch with Docker https://www.elastic.co/guide/en/elasticsearch/reference/7.2/docker.html
+- 
+- 
+
+## 笔记
+ [Install Elasticsearch with Docker | Elasticsearch Guide [7.12] https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html#docker-prod-prerequisites
+
+  安装插件
+
+1.安装中文分词插件，
+
+登录容器
+
+docker exec -it es7_12_01  /bin/bash
+
+执行
+
+ elasticsearch-plugin install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v7.12.1/elasticsearch-analysis-ik-7.12.1.zip
+
+重启容器
+
+
+
+2.安装拼音插件，登录容器，执行
+
+ elasticsearch-plugin install https://github.com/medcl/elasticsearch-analysis-pinyin/releases/download/v7.12.1/elasticsearch-analysis-pinyin-7.12.1.zip
+
+
+
+3.简繁体转换插件
+
+https://github.com/medcl/elasticsearch-analysis-stconvert
+
+
+
+
+
