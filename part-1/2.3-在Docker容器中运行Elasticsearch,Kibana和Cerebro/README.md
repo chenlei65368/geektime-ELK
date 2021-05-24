@@ -8,7 +8,10 @@
 docker-compose up
 
 #停止容器
-docker-compose down
+docke-compose stop
+
+#停止容器：命令将停止您的容器，但也会删除已停止的容器以及所有已创建的网络
+docker-compose down  
 
 #停止容器并且移除数据
 docker-compose down -v
@@ -41,10 +44,29 @@ $docker restart name/ID
 - 一个开源的 ELK（Elasticsearch + Logstash + Kibana） docker-compose 配置 https://github.com/deviantony/docker-elk
 - Install Elasticsearch with Docker https://www.elastic.co/guide/en/elasticsearch/reference/7.2/docker.html
 - 
-- 
+
+
 
 ## 笔记
+docker 文档资源 https://support.websoft9.com/docs/docker/zh/
+
  [Install Elasticsearch with Docker | Elasticsearch Guide [7.12] https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html#docker-prod-prerequisites
+
+https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-getting-started-initialization.html
+
+Java High Level REST Client
+
+https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high.html
+
+中文文档
+
+https://learnku.com/docs/elasticsearch73/7.3
+
+https://www.kancloud.cn/yiyanan/elasticsearch_7_6
+
+https://zq99299.github.io/note-book/elasticsearch-senior/
+
+
 
   安装插件
 
@@ -179,6 +201,94 @@ GET /medcl/_search
 ```
 
 
+
+# org 索引测试
+
+```
+PUT /org
+{
+  "settings": {
+     "number_of_replicas": 1,
+     "number_of_shards": 1,
+     "analysis": {
+       "analyzer": {
+         "pinyin_analyzer" :{
+           "tokenizer":"my_pinyin"
+         },
+         "user_name_analyzer" : {
+                    "tokenizer" : "whitespace",
+                    "filter" : "pinyin_first_letter_and_full_pinyin_filter"
+         }
+       },
+       "filter": {
+         "pinyin_first_letter_and_full_pinyin_filter" : {
+                    "type" : "pinyin",
+                    "keep_first_letter" : true,
+                    "keep_full_pinyin" : false,
+                    "keep_none_chinese" : true,
+                    "keep_original" : false,
+                    "limit_first_letter_length" : 16,
+                    "lowercase" : true,
+                    "trim_whitespace" : true,
+                    "keep_none_chinese_in_first_letter" : true
+         }
+       }, 
+       "tokenizer": {
+         "my_pinyin":{
+            "type": "pinyin",
+            "keep_separate_first_letter" : false,
+            "keep_full_pinyin" : true,
+            "keep_original" : true,
+            "limit_first_letter_length" : 16,
+            "lowercase" : true,
+            "remove_duplicated_term" : true
+         }
+       }
+     }
+  },
+  "mappings": {
+    "properties": {
+        "name": {
+          "type": "keyword",
+          "fields": {
+            "pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyin_analyzer"
+              
+            },
+            "ik":{
+              "type": "text",
+              "analyzer": "ik_max_word",
+              "search_analyzer": "ik_smart"
+            }
+          }
+        },
+        "full_name": {
+          "type": "keyword",
+          "fields": {
+            "pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyin_analyzer"
+             
+            },
+            "ik":{
+              "type": "text",
+              "analyzer": "ik_max_word",
+              "search_analyzer": "ik_smart"
+            }
+          }
+        }
+    }
+  },
+  "aliases": {
+    "dev_org": {}
+  }
+}
+```
 
 
 
