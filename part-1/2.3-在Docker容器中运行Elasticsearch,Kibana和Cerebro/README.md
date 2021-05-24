@@ -288,6 +288,54 @@ PUT /org
     "dev_org": {}
   }
 }
+
+GET /org/
+PUT /org/_doc/1
+{
+  "name":"香港佳士得",
+  "full_name":"佳士得香港有限公司"
+}
+
+PUT /org/_doc/2
+{
+  "name":"邦瀚斯",
+  "full_name":"邦瀚斯拍卖行"
+}
+
+GET /org/_analyze
+{
+  "text": ["佳士得香港有限公司"],
+  "analyzer": "pinyin_analyzer"
+}
+GET /org/_analyze
+{
+  "text": ["刘德华 张学友 郭富城 黎明 四大天王"],
+  "analyzer": "user_name_analyzer"
+}
+GET /org/_search?q=name.ik:佳士得
+GET /org/_search?q=name.ik:佳 得
+GET /org/_search?q=full_name.ik:香+佳士
+GET /org/_search?q=name.pinyin:bhs
+GET /org/_search?q=name.pinyin:佳士
+GET /org/_search?q=name.pinyin:xgjsd
+GET /org/_search?q=name.pinyin:xg+shide
+GET /org/_search
+{
+  "query": {"match_phrase": {
+    "name.pinyin": "佳士得"
+  }}
+}
+GET /org/_search
+{
+    "query" : { "match" : { "full_name.ik": "公司" }},
+    "highlight" : {
+        "pre_tags" : ["<tag1>", "<tag2>"],
+        "post_tags" : ["</tag1>", "</tag2>"],
+        "fields" : {
+            "full_name.ik": {}
+        }
+    }
+}
 ```
 
 
