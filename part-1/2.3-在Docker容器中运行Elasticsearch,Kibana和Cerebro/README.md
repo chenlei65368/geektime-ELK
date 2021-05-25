@@ -296,18 +296,18 @@ PUT /org
                     "tokenizer" : "keyword",
                     "filter": ["pinyin_simple_filter","edge_ngram_filter","lowercase"]
          },                
-                "pinyiSimpleSearchAnalyzer":{
+         "pinyiSimpleSearchAnalyzer":{
                     "tokenizer" : "keyword",     
                     "filter": ["my_pinyin_filter","lowercase"]    
-                },
-                "pinyiFullIndexAnalyzer":{                   
+         },
+         "pinyiFullIndexAnalyzer":{                   
                     "tokenizer" : "keyword",
                     "filter": ["pinyin_full_filter","lowercase"] 
-                },                
-                "pinyiFullSearchAnalyzer":{
+         },                
+         "pinyiFullSearchAnalyzer":{
                     "tokenizer" : "keyword",     
                     "filter": ["pinyin_full_filter","lowercase"]    
-                },
+          ,
          "user_name_analyzer" : {
                     "tokenizer" : "whitespace",
                     "filter" : "pinyin_first_letter_and_full_pinyin_filter"
@@ -359,7 +359,6 @@ PUT /org
             "lowercase" : true,
             "remove_duplicated_term" : false
          }
-         
        }, 
        "tokenizer": {
          "my_pinyin":{
@@ -372,13 +371,11 @@ PUT /org
             "lowercase" : true,
             "remove_duplicated_term" : false
          }
-         
        },
         "char_filter" : {
                 "charconvert" : {
                   "type" : "mapping",
-                   "mappings": [
-                                "\\n=>",
+                   "mappings": ["\\n=>",
                                 "?=>",
                                 "\\r=>",
                                 "@ =>",
@@ -425,8 +422,7 @@ PUT /org
                                 "-=>",
                                 "'=>",
                                 "’=>",
-                                "‘=>"
-                              ]
+                                "‘=>"]
                 }
             }
      }
@@ -441,8 +437,7 @@ PUT /org
                "type": "text",
                 "store": false,
                 "term_vector": "with_offsets",
-                "analyzer": "pinyin_analyzer"
-              
+                "analyzer": "pinyin_analyzer" 
             },
             "s_pinyin":{
                "type": "text",
@@ -450,7 +445,6 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiSimpleIndexAnalyzer",
                 "search_analyzer": "pinyiSimpleSearchAnalyzer"
-              
             },
             "f_pinyin":{
                "type": "text",
@@ -458,7 +452,6 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiFullIndexAnalyzer",
                 "search_analyzer": "pinyiFullSearchAnalyzer"
-              
             },
             "ik":{
               "type": "text",
@@ -477,7 +470,6 @@ PUT /org
                 "store": false,
                 "term_vector": "with_offsets",
                 "analyzer": "pinyin_analyzer"
-              
             },
             "s_pinyin":{
                "type": "text",
@@ -485,7 +477,6 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiSimpleIndexAnalyzer",
                 "search_analyzer": "pinyiSimpleSearchAnalyzer"
-              
             },
             "f_pinyin":{
                "type": "text",
@@ -493,7 +484,6 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiFullIndexAnalyzer",
                 "search_analyzer": "pinyiFullSearchAnalyzer"
-              
             },
             "ik":{
               "type": "text",
@@ -521,7 +511,6 @@ PUT /org
                 "store": false,
                 "term_vector": "with_offsets",
                 "analyzer": "pinyin_analyzer"
-              
             },
             "s_pinyin":{
                "type": "text",
@@ -529,7 +518,6 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiSimpleIndexAnalyzer",
                 "search_analyzer": "pinyiSimpleSearchAnalyzer"
-              
             },
             "f_pinyin":{
                "type": "text",
@@ -537,7 +525,6 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiFullIndexAnalyzer",
                 "search_analyzer": "pinyiFullSearchAnalyzer"
-              
             },
             "ik":{
               "type": "text",
@@ -548,8 +535,6 @@ PUT /org
             }
           }
         }
-         
-
     }
   },
   "aliases": {

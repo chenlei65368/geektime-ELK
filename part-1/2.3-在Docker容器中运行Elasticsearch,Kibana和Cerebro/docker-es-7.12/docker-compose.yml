@@ -65,7 +65,6 @@ services:
     networks:
       - es7_12net
 
-
 volumes:
   es7data1:
     driver: local
