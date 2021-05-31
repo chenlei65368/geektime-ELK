@@ -40,7 +40,9 @@ services:
         hard: -1
 
     volumes:
-      - es7data1:/usr/share/elasticsearch/data
+      - /d/es/node1/data:/usr/share/elasticsearch/data
+      - /d/es/node1/logs:/usr/share/elasticsearch/logs
+      - /d/es/node1/plugins:/usr/share/elasticsearch/plugins
     ports:
       - 9200:9200
     networks:
@@ -61,15 +63,17 @@ services:
         hard: -1
 
     volumes:
-      - es7data2:/usr/share/elasticsearch/data
+      - /d/es/node2/data:/usr/share/elasticsearch/data
+      - /d/es/node2/logs:/usr/share/elasticsearch/logs
+      - /d/es/node2/plugins:/usr/share/elasticsearch/plugins
     networks:
       - es7_12net
 
-volumes:
-  es7data1:
-    driver: local
-  es7data2:
-    driver: local
+#volumes:
+#  es7data1:
+#    driver: local
+#  es7data2:
+#    driver: local
 
 networks:
   es7_12net:

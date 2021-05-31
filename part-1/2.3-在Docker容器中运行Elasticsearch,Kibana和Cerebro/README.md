@@ -43,8 +43,13 @@ $docker restart name/ID
 - Cerebro 源码 https://github.com/lmenezes/cerebro
 - 一个开源的 ELK（Elasticsearch + Logstash + Kibana） docker-compose 配置 https://github.com/deviantony/docker-elk
 - Install Elasticsearch with Docker https://www.elastic.co/guide/en/elasticsearch/reference/7.2/docker.html
-- 
-
+- windows vm.max_map_count设置
+打开Window 10 的CMD
+执行以下命令：
+wsl -d docker-desktop
+echo 262144 >> /proc/sys/vm/max_map_count
+复制代码
+通过这个方法，即使操作系统重启，参数仍然有效。
 
 
 ## 笔记
@@ -78,7 +83,9 @@ https://esdoc.bbossgroups.com/#/quickstart
 
 
 
+logstach 中文文档
 
+https://doc.yonyoucloud.com/doc/logstash-best-practice-cn/index.html
 
 ## 插件测试
 
@@ -260,7 +267,7 @@ GET /medcl/_search
 GET /org
 DELETE /org
 
-PUT /org
+PUT /dev_org_v1
 {
   "settings": {
      "number_of_replicas": 1,
@@ -274,43 +281,48 @@ PUT /org
                     "type": "custom",
                     "tokenizer": "keyword",
                     "filter": ["edge_ngram_filter","lowercase"],
-                    "char_filter" : ["charconvert"]
+                    "char_filter" : ["html_strip","charconvert","tsconvert"]
          },
          "ngramSearchAnalyzer": {
                     "type": "custom",
-                    "tokenizer": "keyword",   
+                    "tokenizer": "keyword",
                     "filter":["lowercase"],
-                    "char_filter" : ["charconvert"]
-                }, 
+                    "char_filter" : ["html_strip","charconvert","tsconvert"]
+         }, 
          "ikIndexAnalyzer": {
                     "type": "custom",
                     "tokenizer": "ik_max_word",                   
-                    "char_filter" : ["charconvert"]
-                },
+                    "char_filter" : ["html_strip","charconvert","tsconvert"]
+         },
          "ikSearchAnalyzer": {
                     "type": "custom",
                     "tokenizer": "ik_smart",                       
-                    "char_filter" : ["charconvert"]
-                },
+                    "char_filter" : ["html_strip","charconvert","tsconvert"]
+         },
          "pinyiSimpleIndexAnalyzer":{                   
                     "tokenizer" : "keyword",
-                    "filter": ["pinyin_simple_filter","edge_ngram_filter","lowercase"]
+                    "filter": ["pinyin_simple_filter","edge_ngram_filter","lowercase"],
+                    "char_filter" : ["html_strip","charconvert"]
          },                
          "pinyiSimpleSearchAnalyzer":{
                     "tokenizer" : "keyword",     
-                    "filter": ["my_pinyin_filter","lowercase"]    
+                    "filter": ["my_pinyin_filter","lowercase"],
+                    "char_filter" : ["html_strip","charconvert"]
          },
          "pinyiFullIndexAnalyzer":{                   
                     "tokenizer" : "keyword",
-                    "filter": ["pinyin_full_filter","lowercase"] 
+                    "filter": ["pinyin_full_filter","lowercase"],
+                    "char_filter" : ["html_strip","charconvert"]
          },                
          "pinyiFullSearchAnalyzer":{
                     "tokenizer" : "keyword",     
-                    "filter": ["pinyin_full_filter","lowercase"]    
-          ,
+                    "filter": ["pinyin_full_filter","lowercase"],
+                    "char_filter" : ["html_strip","charconvert"]
+         },
          "user_name_analyzer" : {
                     "tokenizer" : "whitespace",
-                    "filter" : "pinyin_first_letter_and_full_pinyin_filter"
+                    "filter" : "pinyin_first_letter_and_full_pinyin_filter",
+                    "char_filter" : ["html_strip","charconvert"]
          }
        },
        "filter": {
@@ -358,7 +370,14 @@ PUT /org
             "limit_first_letter_length" : 16,
             "lowercase" : true,
             "remove_duplicated_term" : false
-         }
+         },
+         "tsconvert" : {
+                     "type" : "stconvert",
+                     "delimiter" : "#",
+                     "keep_both" : false,
+                     "convert_type" : "t2s"
+                 }
+         
        }, 
        "tokenizer": {
          "my_pinyin":{
@@ -370,12 +389,25 @@ PUT /org
             "limit_first_letter_length" : 16,
             "lowercase" : true,
             "remove_duplicated_term" : false
-         }
+         },
+         "tsconvert" : {
+                    "type" : "stconvert",
+                    "delimiter" : "#",
+                    "keep_both" : false,
+                    "convert_type" : "t2s"
+                }
+         
        },
+      
         "char_filter" : {
+                "tsconvert" : {
+                    "type" : "stconvert",
+                    "convert_type" : "t2s"
+                },
                 "charconvert" : {
                   "type" : "mapping",
-                   "mappings": ["\\n=>",
+                   "mappings": [
+                                "\\n=>",
                                 "?=>",
                                 "\\r=>",
                                 "@ =>",
@@ -422,7 +454,8 @@ PUT /org
                                 "-=>",
                                 "'=>",
                                 "’=>",
-                                "‘=>"]
+                                "‘=>"
+                              ]
                 }
             }
      }
@@ -433,11 +466,20 @@ PUT /org
         "name": {
           "type": "keyword",
           "fields": {
+            "words":{
+               "type": "text",
+                 "store": false,
+                 "term_vector": "with_offsets",
+                 "analyzer": "ngramIndexAnalyzer",
+                 "search_analyzer": "ngramSearchAnalyzer"
+              
+            },
             "pinyin":{
                "type": "text",
                 "store": false,
                 "term_vector": "with_offsets",
-                "analyzer": "pinyin_analyzer" 
+                "analyzer": "pinyin_analyzer"
+              
             },
             "s_pinyin":{
                "type": "text",
@@ -445,6 +487,7 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiSimpleIndexAnalyzer",
                 "search_analyzer": "pinyiSimpleSearchAnalyzer"
+              
             },
             "f_pinyin":{
                "type": "text",
@@ -452,6 +495,7 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiFullIndexAnalyzer",
                 "search_analyzer": "pinyiFullSearchAnalyzer"
+              
             },
             "ik":{
               "type": "text",
@@ -465,11 +509,20 @@ PUT /org
         "full_name": {
           "type": "keyword",
           "fields": {
+            "words":{
+               "type": "text",
+                 "store": false,
+                 "term_vector": "with_offsets",
+                 "analyzer": "ngramIndexAnalyzer",
+                 "search_analyzer": "ngramSearchAnalyzer"
+              
+            },
             "pinyin":{
                "type": "text",
                 "store": false,
                 "term_vector": "with_offsets",
                 "analyzer": "pinyin_analyzer"
+              
             },
             "s_pinyin":{
                "type": "text",
@@ -477,6 +530,7 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiSimpleIndexAnalyzer",
                 "search_analyzer": "pinyiSimpleSearchAnalyzer"
+              
             },
             "f_pinyin":{
                "type": "text",
@@ -484,6 +538,7 @@ PUT /org
                 "term_vector": "with_offsets",
                 "analyzer": "pinyiFullIndexAnalyzer",
                 "search_analyzer": "pinyiFullSearchAnalyzer"
+              
             },
             "ik":{
               "type": "text",
@@ -506,26 +561,6 @@ PUT /org
         "address": {
           "type": "keyword",
           "fields": {
-            "pinyin":{
-               "type": "text",
-                "store": false,
-                "term_vector": "with_offsets",
-                "analyzer": "pinyin_analyzer"
-            },
-            "s_pinyin":{
-               "type": "text",
-                "store": false,
-                "term_vector": "with_offsets",
-                "analyzer": "pinyiSimpleIndexAnalyzer",
-                "search_analyzer": "pinyiSimpleSearchAnalyzer"
-            },
-            "f_pinyin":{
-               "type": "text",
-                "store": false,
-                "term_vector": "with_offsets",
-                "analyzer": "pinyiFullIndexAnalyzer",
-                "search_analyzer": "pinyiFullSearchAnalyzer"
-            },
             "ik":{
               "type": "text",
               "store": false,
@@ -535,10 +570,9 @@ PUT /org
             }
           }
         }
+         
+
     }
-  },
-  "aliases": {
-    "dev_org": {}
   }
 }
 
@@ -776,15 +810,15 @@ input {
 		#}
 		 
 		# 因为时区问题需要修正时间
-		ruby { 
-			code => "event.set('timestamp', event.get('@timestamp').time.localtime + 8*60*60)" 
-		}
-		ruby {
-			code => "event.set('@timestamp',event.get('timestamp'))"
-		}
-		mutate {
-			remove_field => ["timestamp"]
-		}
+		#ruby { 
+		#	code => "event.set('timestamp', event.get('@timestamp').time.localtime + 8*60*60)" 
+		#}
+		#ruby {
+		#	code => "event.set('@timestamp',event.get('timestamp'))"
+		#}
+		#mutate {
+		#	remove_field => ["timestamp"]
+		#}
 		 
 		# 因为时区问题需要修正时间
 		#ruby {
@@ -913,6 +947,481 @@ output {
 ```
 
 
+
+lot_item
+
+```
+PUT /dev_lotitem_v1
+{
+  "settings": {
+     "number_of_replicas": 1,
+     "number_of_shards": 3,
+     "analysis": {
+       "analyzer": {
+         "pinyin_analyzer" :{
+           "tokenizer":"my_pinyin"
+         },
+         "ngramIndexAnalyzer": {
+                    "type": "custom",
+                    "tokenizer": "keyword",
+                    "filter": ["edge_ngram_filter","lowercase"],
+                    "char_filter" : ["html_strip","charconvert","tsconvert"]
+         },
+         "ngramSearchAnalyzer": {
+                    "type": "custom",
+                    "tokenizer": "keyword",
+                    "filter":["lowercase"],
+                    "char_filter" : ["html_strip","charconvert","tsconvert"]
+         }, 
+         "ikIndexAnalyzer": {
+                    "type": "custom",
+                    "tokenizer": "ik_max_word",                   
+                    "char_filter" : ["html_strip","charconvert","tsconvert"]
+         },
+         "ikSearchAnalyzer": {
+                    "type": "custom",
+                    "tokenizer": "ik_smart",                       
+                    "char_filter" : ["html_strip","charconvert","tsconvert"]
+         },
+         "pinyiSimpleIndexAnalyzer":{                   
+                    "tokenizer" : "keyword",
+                    "filter": ["pinyin_simple_filter","edge_ngram_filter","lowercase"],
+                    "char_filter" : ["html_strip","charconvert"]
+         },                
+         "pinyiSimpleSearchAnalyzer":{
+                    "tokenizer" : "keyword",     
+                    "filter": ["my_pinyin_filter","lowercase"],
+                    "char_filter" : ["html_strip","charconvert"]
+         },
+         "pinyiFullIndexAnalyzer":{                   
+                    "tokenizer" : "keyword",
+                    "filter": ["pinyin_full_filter","lowercase"],
+                    "char_filter" : ["html_strip","charconvert"]
+         },                
+         "pinyiFullSearchAnalyzer":{
+                    "tokenizer" : "keyword",     
+                    "filter": ["pinyin_full_filter","lowercase"],
+                    "char_filter" : ["html_strip","charconvert"]
+         },
+         "user_name_analyzer" : {
+                    "tokenizer" : "whitespace",
+                    "filter" : "pinyin_first_letter_and_full_pinyin_filter",
+                    "char_filter" : ["html_strip","charconvert"]
+         }
+       },
+       "filter": {
+         "edge_ngram_filter": { 
+                    "type":     "edge_ngram",
+                    "min_gram": 1,
+                    "max_gram": 50                    
+         }, 
+         "pinyin_simple_filter":{
+           "type" : "pinyin",
+                    "keep_first_letter":true,
+                    "keep_separate_first_letter" : false,
+                    "keep_full_pinyin" : false,
+                    "keep_original" : false,
+                    "limit_first_letter_length" : 50,
+                    "lowercase" : true
+         },
+         "pinyin_full_filter":{
+                    "type" : "pinyin",
+                    "keep_first_letter":false,
+                    "keep_separate_first_letter" : false,
+                    "keep_full_pinyin" : true,                        
+                    "none_chinese_pinyin_tokenize":true,
+                    "keep_original" : false,
+                    "limit_first_letter_length" : 50,
+                    "lowercase" : true
+         },
+         "pinyin_first_letter_and_full_pinyin_filter" : {
+                    "type" : "pinyin",
+                    "keep_first_letter" : true,
+                    "keep_full_pinyin" : false,
+                    "keep_none_chinese" : true,
+                    "keep_original" : false,
+                    "limit_first_letter_length" : 16,
+                    "lowercase" : true,
+                    "trim_whitespace" : true,
+                    "keep_none_chinese_in_first_letter" : true
+         },
+         "my_pinyin_filter" : {
+            "type": "pinyin",
+            "keep_first_letter" : true,
+            "keep_separate_first_letter" : true,
+            "keep_full_pinyin" : true,
+            "keep_original" : false,
+            "limit_first_letter_length" : 16,
+            "lowercase" : true,
+            "remove_duplicated_term" : false
+         },
+         "tsconvert" : {
+                     "type" : "stconvert",
+                     "delimiter" : "#",
+                     "keep_both" : false,
+                     "convert_type" : "t2s"
+                 }
+         
+       }, 
+       "tokenizer": {
+         "my_pinyin":{
+            "type": "pinyin",
+            "keep_first_letter" : true,
+            "keep_separate_first_letter" : true,
+            "keep_full_pinyin" : true,
+            "keep_original" : false,
+            "limit_first_letter_length" : 16,
+            "lowercase" : true,
+            "remove_duplicated_term" : false
+         },
+         "tsconvert" : {
+                    "type" : "stconvert",
+                    "delimiter" : "#",
+                    "keep_both" : false,
+                    "convert_type" : "t2s"
+                }
+         
+       },
+      
+        "char_filter" : {
+                "tsconvert" : {
+                    "type" : "stconvert",
+                    "convert_type" : "t2s"
+                },
+                "charconvert" : {
+                  "type" : "mapping",
+                   "mappings": [
+                                "\\n=>",
+                                "?=>",
+                                "\\r=>",
+                                "@ =>",
+                                "/=> ",
+                                "(=> ",
+                                ")=> ",
+                                "（=> ",
+                                "）=> ",
+                                "à=>a",
+                                "á=>a",
+                                "â=>a",
+                                "ä=>a",
+                                "À=>a",
+                                "Â=>a",
+                                "Ä=>a",
+                                "è=>e",
+                                "é=>e",
+                                "ê=>e",
+                                "ë=>e",
+                                "È=>e",
+                                "É=>e",
+                                "Ê=>e",
+                                "Ë=>e",
+                                "î=>i",
+                                "ï=>i",
+                                "Î=>i",
+                                "Ï=>i",
+                                "ô=>o",
+                                "ö=>o",
+                                "Ô=>o",
+                                "Ö=>o",
+                                "ù=>u",
+                                "û=>u",
+                                "ü=>u",
+                                "Ù=>u",
+                                "Û=>u",
+                                "Ü=>u",
+                                "ç=>c",
+                                "œ=>c",
+                                "&=>",
+                                "^=>",
+                                ".=>",
+                                "·=>",
+                                "-=>",
+                                "'=>",
+                                "’=>",
+                                "‘=>"
+                              ]
+                }
+            }
+     }
+  },
+  "mappings": {
+    "dynamic": false, 
+    "properties": {
+        "art_name": {
+          "type": "keyword",
+          "fields": {
+            "words":{
+               "type": "text",
+                 "store": false,
+                 "term_vector": "with_offsets",
+                 "analyzer": "ngramIndexAnalyzer",
+                 "search_analyzer": "ngramSearchAnalyzer"
+              
+            },
+            "pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyin_analyzer"
+              
+            },
+            "s_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiSimpleIndexAnalyzer",
+                "search_analyzer": "pinyiSimpleSearchAnalyzer"
+              
+            },
+            "f_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiFullIndexAnalyzer",
+                "search_analyzer": "pinyiFullSearchAnalyzer"
+              
+            },
+            "ik":{
+              "type": "text",
+              "store": false,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "ikIndexAnalyzer",
+              "search_analyzer": "ikSearchAnalyzer"
+            }
+          }
+        },
+        "art_name_all": {
+          "type": "keyword",
+          "fields": {
+            "words":{
+               "type": "text",
+                 "store": false,
+                 "term_vector": "with_offsets",
+                 "analyzer": "ngramIndexAnalyzer",
+                 "search_analyzer": "ngramSearchAnalyzer"
+              
+            },
+            "pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyin_analyzer"
+              
+            },
+            "s_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiSimpleIndexAnalyzer",
+                "search_analyzer": "pinyiSimpleSearchAnalyzer"
+              
+            },
+            "f_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiFullIndexAnalyzer",
+                "search_analyzer": "pinyiFullSearchAnalyzer"
+              
+            },
+            "ik":{
+              "type": "text",
+              "store": false,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "ikIndexAnalyzer",
+              "search_analyzer": "ikSearchAnalyzer"
+            }
+          }
+        },
+        "artist": {
+          "type": "keyword",
+          "fields": {
+            "words":{
+               "type": "text",
+                 "store": false,
+                 "term_vector": "with_offsets",
+                 "analyzer": "ngramIndexAnalyzer",
+                 "search_analyzer": "ngramSearchAnalyzer"
+              
+            },
+            "pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyin_analyzer"
+              
+            },
+            "s_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiSimpleIndexAnalyzer",
+                "search_analyzer": "pinyiSimpleSearchAnalyzer"
+              
+            },
+            "f_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiFullIndexAnalyzer",
+                "search_analyzer": "pinyiFullSearchAnalyzer"
+              
+            },
+            "ik":{
+              "type": "text",
+              "store": false,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "ikIndexAnalyzer",
+              "search_analyzer": "ikSearchAnalyzer"
+            }
+          }
+        },
+        "spec_name": {
+          "type": "keyword",
+          "fields": {
+            "words":{
+               "type": "text",
+                 "store": false,
+                 "term_vector": "with_offsets",
+                 "analyzer": "ngramIndexAnalyzer",
+                 "search_analyzer": "ngramSearchAnalyzer"
+              
+            },
+            "pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyin_analyzer"
+              
+            },
+            "s_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiSimpleIndexAnalyzer",
+                "search_analyzer": "pinyiSimpleSearchAnalyzer"
+              
+            },
+            "f_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiFullIndexAnalyzer",
+                "search_analyzer": "pinyiFullSearchAnalyzer"
+              
+            },
+            "ik":{
+              "type": "text",
+              "store": false,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "ikIndexAnalyzer",
+              "search_analyzer": "ikSearchAnalyzer"
+            }
+          }
+        },
+        "ses_name": {
+          "type": "keyword",
+          "fields": {
+            "words":{
+               "type": "text",
+                 "store": false,
+                 "term_vector": "with_offsets",
+                 "analyzer": "ngramIndexAnalyzer",
+                 "search_analyzer": "ngramSearchAnalyzer"
+              
+            },
+            "pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyin_analyzer"
+              
+            },
+            "s_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiSimpleIndexAnalyzer",
+                "search_analyzer": "pinyiSimpleSearchAnalyzer"
+              
+            },
+            "f_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiFullIndexAnalyzer",
+                "search_analyzer": "pinyiFullSearchAnalyzer"
+              
+            },
+            "ik":{
+              "type": "text",
+              "store": false,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "ikIndexAnalyzer",
+              "search_analyzer": "ikSearchAnalyzer"
+            }
+          }
+        },
+        "org_full_name": {
+          "type": "keyword",
+          "fields": {
+            "words":{
+               "type": "text",
+                 "store": false,
+                 "term_vector": "with_offsets",
+                 "analyzer": "ngramIndexAnalyzer",
+                 "search_analyzer": "ngramSearchAnalyzer"
+              
+            },
+            "pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyin_analyzer"
+              
+            },
+            "s_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiSimpleIndexAnalyzer",
+                "search_analyzer": "pinyiSimpleSearchAnalyzer"
+              
+            },
+            "f_pinyin":{
+               "type": "text",
+                "store": false,
+                "term_vector": "with_offsets",
+                "analyzer": "pinyiFullIndexAnalyzer",
+                "search_analyzer": "pinyiFullSearchAnalyzer"
+              
+            },
+            "ik":{
+              "type": "text",
+              "store": false,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "ikIndexAnalyzer",
+              "search_analyzer": "ikSearchAnalyzer"
+            }
+          }
+        },
+        "recommend": {
+          "type": "integer"
+        },
+        "art_code": {
+          "type": "keyword"
+        },
+        "cooperateStatus": {
+          "type": "integer"
+        },
+        "auction_time": {
+          "type": "date"
+        }
+
+    }
+  }
+}
+```
 
 
 
