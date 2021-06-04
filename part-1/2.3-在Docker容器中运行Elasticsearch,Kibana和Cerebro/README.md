@@ -1417,7 +1417,9 @@ PUT /dev_lotitem_v1
         "auction_time": {
           "type": "date"
         },
-        "deleted_flag":{"type":"integer"}
+        "deleted_flag":{"type":"integer"},
+        "class_code":{"type":"keyword"},
+        "category":{"type":"keyword"}
 
     }
   }
