@@ -948,7 +948,7 @@ output {
 
 
 
-lot_item
+# lot_item索引
 
 ```
 PUT /dev_lotitem_v1
@@ -1411,7 +1411,7 @@ PUT /dev_lotitem_v1
         "art_code": {
           "type": "keyword"
         },
-        "cooperateStatus": {
+        "cooperate_status": {
           "type": "integer"
         },
         "auction_time": {
