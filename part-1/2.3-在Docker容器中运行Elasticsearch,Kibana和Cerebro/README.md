@@ -267,6 +267,14 @@ GET /medcl/_search
 GET /org
 DELETE /org
 
+POST /_aliases
+{
+  "actions" : [
+    { "add":  { "index": "dev_org_v1", "alias": "dev_org" } },
+    { "remove_index": { "index": "test" } }  
+  ]
+}
+
 PUT /dev_org_v1
 {
   "settings": {
